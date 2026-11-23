@@ -1,0 +1,52 @@
+{
+  "id": "building_001",
+  "title": "Corner store with apartment above",
+  "use": ["retail_ground_floor", "residential_upper_floor"],
+  "style": {
+    "region": "South Florida coastal city, fictional",
+    "tags": ["streamline moderne art deco", "pastel stucco", "rounded corner", "horizontal speed lines",
+             "glass block", "terrazzo entry", "neon signage", "hurricane shutters", "sun-bleached paint",
+             "salt and humidity grime", "rust streaks under fixtures"],
+    "palette": {"walls": "faded flamingo pink", "trim": "off-white", "accent": "mint green",
+                "shutters": "sea-foam teal", "neon": ["hot pink", "cyan"]},
+    "wear": "lived-in: 0 = brand new, 1 = derelict",
+    "wear_level": 0.55
+  },
+  "massing": {
+    "footprint_m": {"width": 14.0, "depth": 11.0},
+    "corner": "rounded, radius 2.5 m, at front-left",
+    "floors": 2,
+    "floor_height_m": [4.2, 3.2],
+    "parapet_height_m": 0.9,
+    "roof": "flat with parapet"
+  },
+  "facades": {
+    "front": "storefront: full-width glass with aluminium frames, recessed entry door, awning, main neon sign above; upper floor: 4 windows with teal shutters, small balcony over entry",
+    "left": "rounded corner continues storefront glass 3 m, then plain wall with mural space, side door to stairs, 3 upper windows",
+    "right": "party wall: mostly blank, posters and graffiti, electrical meter box, pipes",
+    "back": "service: steel back door, dumpster bay, AC condensers, external stair to apartment, small barred windows"
+  },
+  "signage": [
+    {"text": "SUNRAY MART", "type": "neon_channel_letters", "where": "front parapet"},
+    {"text": "LIQUOR · LOTTO · ICE", "type": "neon_window_sign", "where": "storefront glass"},
+    {"text": "OPEN 24 HRS", "type": "lightbox", "where": "corner"}
+  ],
+  "props_exterior": ["wall AC units x4", "rooftop condenser x2", "satellite dish", "water heater tank",
+                     "newspaper boxes x2", "ice chest freezer", "trash cans x3", "dumpster", "payphone",
+                     "bike rack", "potted palm x2", "security camera x2", "gutter downpipes",
+                     "electrical conduit runs", "flickering fluorescent tube light"],
+  "interior_phase2": {
+    "rooms": ["shop floor", "back storage", "cashier booth", "toilet", "stair", "apartment living/kitchen", "apartment bedroom", "apartment bathroom"],
+    "notes": "shop has shelving aisles, drinks fridges along back wall, bulletproof cashier window"
+  },
+  "budgets": {
+    "exterior_hd_tris": 60000,
+    "exterior_lod_tris": 8000,
+    "exterior_slod_tris": 600,
+    "max_materials_hd": 12,
+    "texel_density_px_per_m": 512,
+    "max_texture_dictionary_mb": 16,
+    "collision_tris": 1500
+  },
+  "rules": ["original brand names only, no real or Rockstar logos", "flat-lit references for anything used as texture"]
+}

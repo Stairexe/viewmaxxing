@@ -1,5 +1,11 @@
 # viewmaxxing
 
-Personal AI room-scanning to walkable-3D pipeline (iPhone LiDAR + Gaussian splats + depth AI).
+AI pipeline for building game-ready 3D environments: real-world scans **and** AI-designed buildings (GTA-style MLOs).
 
-See [docs/GAMEPLAN.md](docs/GAMEPLAN.md) and [docs/CHARACTER.md](docs/CHARACTER.md) (scan your face into a rigged character), [kaggle/](kaggle/README.md) (free-GPU room → splat notebook), and [viewfinder/](viewfinder/README.md) (self-hosted Atlas-Viewfinder-style photos → imagined views → splat, on rented GPUs).
+**Current direction: [MLO Forge](docs/MLO_FORGE.md).** Describe a building → AI reference images → 3D proxy → clean rebuilt, textured, decal-heavy, game-optimised building → FiveM/GTA V MLO (engine-neutral glTF master). Every result gets rated, and the ratings train the pipeline.
+- Building #1: spec [forge/specs/building_001.json](forge/specs/building_001.json), reference prompts [forge/prompts/building_001.md](forge/prompts/building_001.md)
+
+Components reused by the forge:
+- [viewfinder/](viewfinder/README.md): self-hosted photos → (imagined views) → splat on rented GPUs (WorldMirror 2.0 + Lyra 2.0 + gsplat)
+- [kaggle/](kaggle/README.md): free-GPU room video → splat + collision notebook
+- [docs/GAMEPLAN.md](docs/GAMEPLAN.md): original scan-to-game research · [docs/CHARACTER.md](docs/CHARACTER.md): your face → rigged character
