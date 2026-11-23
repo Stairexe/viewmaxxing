@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>viewfinder-open</title>
+<style>
+  :root {
+    --bg: #f6f6f3; --panel: #ffffff; --ink: #1b1b1a; --muted: #6b6a66; --line: #e2e1dc;
+    --accent: #2f5bd3; --ok: #2b8a4b; --err: #c23b2e; --warn: #b7791f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141413; --panel: #1d1d1b; --ink: #ecebe7; --muted: #9c9a94; --line: #2e2d2a;
+            --accent: #7c9cff; --ok: #5cc27e; --err: #ff7a6b; --warn: #e6b450; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input, select, textarea { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 6px;
+         background: var(--bg); color: var(--ink); font: inherit; }
+  textarea { min-height: 60px; }
+  .check { display: flex; gap: 8px; align-items: center; }
+  .check input { width: auto; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 10px 16px;
+           font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 12px 0 0; }
+  legend { padding: 0 6px; color: var(--muted); font-size: 13px; }
+  .job { border-top: 1px solid var(--line); padding: 12px 0; }
+  .job:first-child { border-top: 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+  .state { font-weight: 600; }
+  .state.done { color: var(--ok); } .state.error { color: var(--err); } .state.running { color: var(--warn); }
+  .stages { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .stage { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .stage.done { border-color: var(--ok); color: var(--ok); }
+  .stage.now { border-color: var(--warn); color: var(--warn); }
+  .links a { margin-right: 12px; color: var(--accent); }
+  pre { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px;
+        overflow-x: auto; font-size: 12px; max-height: 220px; }
+  .hint { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>viewfinder-open</h1>
+  <p class="sub">Photos in, explorable 3D splat out. WorldMirror 2.0 reconstructs, Lyra 2.0 imagines the parts you didn't photograph.</p>
+
+  <form id="f" class="panel">
+    <div class="grid">
+      <div><label for="photos">Photos (1–200, same scene)</label><input id="photos" type="file" multiple accept="image/*" required></div>
+      <div><label for="name">Name</label><input id="name" value="my_room"></div>
+      <div><label for="height">Phone height while shooting (m)</label><input id="height" type="number" step="0.05" value="1.4"></div>
+      <div><label for="token">Access token (if the server set one)</label><input id="token" type="password" autocomplete="off"></div>
+    </div>
+
+    <fieldset>
+      <legend>Imagine unseen areas (Lyra 2.0)</legend>
+      <div class="check"><input id="imagine" type="checkbox"><label for="imagine" style="margin:0">Generate extra views along a camera path</label></div>
+      <div class="grid" style="margin-top:10px">
+        <div><label for="preset">Camera path</label>
+          <select id="preset">
+            <option value="turn_around">Turn around 360° (fills what's behind you)</option>
+            <option value="look_around">Look left and right</option>
+            <option value="walk_forward">Walk forward</option>
+            <option value="pull_back">Step back</option>
+            <option value="truck_right">Slide right</option>
+            <option value="orbit">Orbit the centre</option>
+          </select></div>
+        <div><label for="anchors">Start from photo #s (comma separated)</label><input id="anchors" value="0"></div>
+        <div><label for="distance">Distance / radius (m)</label><input id="distance" type="number" step="0.1" value="0.6"></div>
+        <div><label for="frames">Frames (81, 161, 241…)</label><input id="frames" type="number" step="80" min="81" value="161"></div>
+      </div>
+      <div style="margin-top:10px"><label for="prompt">Describe the place (helps the generator)</label>
+        <textarea id="prompt" placeholder="A cosy bedroom with a wooden desk, white walls, a bed with a grey blanket, warm evening light"></textarea></div>
+      <div class="check" style="margin-top:8px"><input id="fast" type="checkbox" checked><label for="fast" style="margin:0">Fast mode (about 15× faster, slightly softer)</label></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Quality</legend>
+      <div class="check"><input id="refine" type="checkbox" checked><label for="refine" style="margin:0">Refine with gsplat (sharper; adds 5–20 min)</label></div>
+      <div class="grid" style="margin-top:10px">
+        <div><label for="steps">Refine length</label>
+          <select id="steps"><option value="0.25">Short (7.5k steps)</option><option value="0.5">Medium</option><option value="1">Full (30k steps)</option></select></div>
+      </div>
+    </fieldset>
+
+    <p style="margin:16px 0 0"><button id="go" type="submit">Build 3D scene</button> <span id="msg" class="hint"></span></p>
+  </form>
+
+  <section class="panel">
+    <div class="row"><strong>Jobs</strong><span class="hint">refreshes every 3 s</span></div>
+    <div id="jobs"><p class="hint">No jobs yet.</p></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const STAGES = ["prepare", "recon", "imagine", "fuse", "colmap", "refine", "export"];
+let token = "";
+try { token = localStorage.getItem("vf_token") || ""; } catch (e) {}
+$("token").value = token;
+$("token").addEventListener("change", () => { token = $("token").value; try { localStorage.setItem("vf_token", token); } catch (e) {} refresh(); });
+
+const q = (url) => token ? url + (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(token) : url;
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+$("f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const files = $("photos").files;
+  if (!files.length) return;
+  const opts = {
+    name: $("name").value,
+    camera_height: parseFloat($("height").value) || 1.4,
+    imagine: {
+      enabled: $("imagine").checked, preset: $("preset").value,
+      anchors: $("anchors").value.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n)),
+      distance: parseFloat($("distance").value) || 0.6, frames: parseInt($("frames").value, 10) || 161,
+      prompt: $("prompt").value, fast: $("fast").checked,
+    },
+    refine: { enabled: $("refine").checked, steps_scaler: parseFloat($("steps").value) },
+  };
+  const body = new FormData();
+  for (const f of files) body.append("photos", f);
+  body.append("options", JSON.stringify(opts));
+  $("go").disabled = true; $("msg").textContent = "Uploading " + files.length + " photos…";
+  try {
+    const r = await fetch(q("/api/jobs"), { method: "POST", body });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || r.statusText);
+    $("msg").textContent = "Queued job " + j.id;
+    refresh();
+  } catch (err) { $("msg").textContent = "Error: " + err.message; }
+  $("go").disabled = false;
+});
+
+async function refresh() {
+  let jobs;
+  try { const r = await fetch(q("/api/jobs")); if (!r.ok) throw new Error(r.status); jobs = await r.json(); }
+  catch (e) { $("jobs").innerHTML = '<p class="hint">Can\'t reach the server (' + esc(e.message) + "). Check the token.</p>"; return; }
+  if (!jobs.length) { $("jobs").innerHTML = '<p class="hint">No jobs yet.</p>'; return; }
+  const parts = [];
+  for (const j of jobs) {
+    const stages = STAGES.map((s) => {
+      const cls = (j.done || []).includes(s) ? "done" : (j.stage === s ? "now" : "");
+      return '<span class="stage ' + cls + '">' + s + "</span>";
+    }).join("");
+    const links = (j.outputs || []).map((o) =>
+      '<a href="' + q("/api/jobs/" + j.id + "/files/" + o) + '" target="_blank" rel="noopener">' + esc(o.split("/").pop()) + "</a>").join("");
+    let extra = "";
+    if (j.state === "running" || j.state === "error") {
+      const d = await (await fetch(q("/api/jobs/" + j.id))).json();
+      extra = "<pre>" + esc((d.log_tail || []).slice(-12).join("\n")) + "</pre>";
+    }
+    parts.push('<div class="job"><div class="row"><span><strong>' + esc(j.name) + '</strong> <span class="hint">' + esc(j.id) +
+      '</span></span><span class="state ' + esc(j.state) + '">' + esc(j.state) + (j.seconds ? " · " + Math.round(j.seconds / 60) + " min" : "") +
+      '</span></div><div class="stages">' + stages + '</div><div class="hint">' + esc(j.message) + '</div><div class="links">' + links + "</div>" + extra + "</div>");
+  }
+  $("jobs").innerHTML = parts.join("");
+}
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

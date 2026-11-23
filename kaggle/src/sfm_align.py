@@ -129,6 +129,7 @@ def align(rec: pycolmap.Reconstruction, camera_height: float, known_scale):
     center_xz = np.median(cams_R[:, [0, 2]], axis=0)
     t = -scale * np.array([center_xz[0], floor_y, center_xz[1]])
     rec.transform(pycolmap.Sim3d(scale, pycolmap.Rotation3d(R), t))
+    sim3 = {"scale": float(scale), "R": R.tolist(), "t": t.tolist()}  # new = scale * R @ old + t
 
     # Spawn/seed: the camera position nearest the middle of the capture path, at 1 m.
     cams = np.array([rec.image(i).projection_center() for i in rec.reg_image_ids()])
@@ -145,6 +146,7 @@ def align(rec: pycolmap.Reconstruction, camera_height: float, known_scale):
         "bounds_max": hi.tolist(),
         "num_images": rec.num_reg_images(),
         "num_points": rec.num_points3D(),
+        "sim3": sim3,
     }
 
 

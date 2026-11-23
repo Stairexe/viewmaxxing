@@ -44,11 +44,19 @@ def build(xyz, voxel, min_count, bounds=None):
     grid = np.zeros(dims, np.int32)
     np.add.at(grid, tuple(idx.T), 1)
     occ = grid >= min_count
+    if occ.sum() < 0.002 * occ.size and min_count > 1:
+        print("Sparse splat: counting every voxel with at least one Gaussian as solid")
+        occ = grid >= 1
     occ = ndimage.binary_closing(occ, iterations=1)  # seal pinholes
     labels, n = ndimage.label(occ)
     if n > 1:  # drop tiny floating islands
         sizes = ndimage.sum(occ, labels, range(1, n + 1))
-        occ = np.isin(labels, 1 + np.flatnonzero(sizes >= 20))
+        big = 1 + np.flatnonzero(sizes >= 20)
+        if len(big):
+            occ = np.isin(labels, big)
+    if not occ.any():
+        print("WARNING: no solid voxels found; the collider will only contain the floor")
+        return None, lo, hi
     padded = np.pad(occ, 1).astype(np.float32)
     verts, faces, _, _ = measure.marching_cubes(padded, 0.5)
     verts = (verts - 1) * voxel + lo
@@ -83,12 +91,14 @@ def main() -> None:
         margin = 0.15 * (hi - lo)
         bounds = (lo - margin, hi + margin)
     mesh, lo, hi = build(xyz, a.voxel, a.min_count, bounds)
-    print(f"Marching cubes: {len(mesh.faces):,} triangles")
-    if len(mesh.faces) > a.faces:
-        mesh = mesh.simplify_quadric_decimation(face_count=a.faces)
-        print(f"Decimated to {len(mesh.faces):,} triangles")
-    parts = [mesh]
-    if not a.no_floor:
+    parts = []
+    if mesh is not None:
+        print(f"Marching cubes: {len(mesh.faces):,} triangles")
+        if len(mesh.faces) > a.faces:
+            mesh = mesh.simplify_quadric_decimation(face_count=a.faces)
+            print(f"Decimated to {len(mesh.faces):,} triangles")
+        parts.append(mesh)
+    if not a.no_floor or not parts:
         parts.append(floor_slab(lo, hi))
     out = trimesh.util.concatenate(parts)
     out.export(a.out)
